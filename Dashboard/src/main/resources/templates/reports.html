@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Reports</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<style>
+  body {
+    background: linear-gradient(135deg, #f3e5f5, #e0f7fa);
+    min-height: 100vh;
+  }
+  .report-card {
+    border-radius: 16px;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+  }
+  .report-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0px 8px 16px rgba(0,0,0,0.15);
+  }
+</style>
+<body>
+<!-- Navbar -->
+<nav class="navbar navbar-expand-lg navbar-dark bg-dark shadow-sm">
+  <div class="container-fluid">
+    <a class="navbar-brand fw-bold" href="#">💵 CashFlow Dashboard</a>
+    <div class="collapse navbar-collapse">
+      <ul class="navbar-nav ms-auto">
+        <li class="nav-item"><a class="nav-link" href="/transactions/view">Transactions</a></li>
+        <li class="nav-item"><a class="nav-link active" href="/reports">Reports</a></li>
+        <li class="nav-item"><a class="nav-link" href="#">Settings</a></li>
+      </ul>
+    </div>
+  </div>
+</nav>
+
+<div class="container py-5">
+    <h2 class="fw-bold mb-4 text-center">📊 Reports Dashboard</h2>
+
+    <div class="row g-4">
+        <!-- Monthly Trends -->
+        <div class="col-md-6">
+            <div class="card report-card shadow-sm">
+                <div class="card-body">
+                    <h5 class="card-title fw-bold">📊 Monthly Trends</h5>
+                    <p class="text-muted">Line chart of Income vs Expenses with option to switch between monthly / weekly view.</p>
+                    <canvas id="monthlyTrendsChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Category Breakdown -->
+        <div class="col-md-6">
+            <div class="card report-card shadow-sm">
+                <div class="card-body">
+                    <h5 class="card-title fw-bold">🥧 Category Breakdown</h5>
+                    <p class="text-muted">Pie chart of expense categories with date filters.</p>
+                    <canvas id="categoryBreakdownChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Cash Flow Report -->
+        <div class="col-md-6">
+            <div class="card report-card shadow-sm">
+                <div class="card-body">
+                    <h5 class="card-title fw-bold">📈 Cash Flow Report</h5>
+                    <p class="text-muted">Stacked bar chart: Income – Expenses = Net Savings.</p>
+                    <canvas id="cashFlowChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Financial Insights -->
+        <div class="col-md-6">
+            <div class="card report-card shadow-sm">
+                <div class="card-body">
+                    <h5 class="card-title fw-bold">💡 Financial Insights</h5>
+                    <ul class="list-group">
+                        <li class="list-group-item">Top 3 spending categories</li>
+                        <li class="list-group-item">Biggest single expense</li>
+                        <li class="list-group-item">Recurring payments detection</li>
+                        <li class="list-group-item">Spending vs last month</li>
+                        <li class="list-group-item">Savings Rate %</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Date Range Filters
+    <div class="mt-5">
+        <h4 class="fw-bold">📅 Date Range Filters</h4>
+        <div class="d-flex gap-2 flex-wrap">
+            <button class="btn btn-outline-primary">This Month</button>
+            <button class="btn btn-outline-primary">Last Month</button>
+            <button class="btn btn-outline-primary">Last 3 Months</button>
+            <button class="btn btn-outline-primary">Year to Date</button>
+            <input type="date" class="form-control w-auto">
+            <input type="date" class="form-control w-auto">
+            <button class="btn btn-success">Apply</button>
+        </div>
+    </div> -->
+</div>
+
+<script>
+    async function loadMonthlyTrends() {
+        const res = await fetch("/api/reports/monthly-trends");
+        const data = await res.json();
+
+        const labels = data.map(d => d.month);
+        const income = data.map(d => d.income);
+        const expenses = data.map(d => d.expense);
+
+        new Chart(document.getElementById('monthlyTrendsChart'), {
+            type: 'line',
+            data: {
+                labels,
+                datasets: [
+                    { label: 'Income', data: income, borderColor: 'green' },
+                    { label: 'Expenses', data: expenses, borderColor: 'red' }
+                ]
+            }
+        });
+    }
+
+    async function loadCategoryBreakdown() {
+        const res = await fetch("/api/reports/category-breakdown");
+        const data = await res.json();
+
+        new Chart(document.getElementById('categoryBreakdownChart'), {
+            type: 'doughnut',
+            data: {
+                labels: data.map(d => d.category),
+                datasets: [{
+                    data: data.map(d => d.total),
+                    backgroundColor: ['#ff6384', '#36a2eb', '#ffcd56', '#4bc0c0', '#9966ff']
+                }]
+            }
+        });
+    }
+
+    async function loadCashFlow() {
+        const res = await fetch("/api/reports/cashflow");
+        const data = await res.json();
+
+        new Chart(document.getElementById('cashFlowChart'), {
+            type: 'bar',
+            data: {
+                labels: data.map(d => d.month),
+                datasets: [
+                    { label: 'Income', data: data.map(d => d.income), backgroundColor: 'green' },
+                    { label: 'Expenses', data: data.map(d => d.expense), backgroundColor: 'red' },
+                    { label: 'Net Savings', data: data.map(d => d.net), backgroundColor: 'blue' }
+                ]
+            }
+        });
+    }
+
+    // Run all
+    loadMonthlyTrends();
+    loadCategoryBreakdown();
+    loadCashFlow();
+</script>
+</body>
+</html>
