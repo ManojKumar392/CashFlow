@@ -18,9 +18,18 @@
                 <input type="email" class="form-control" name="email" required>
             </div>
             <div class="mb-3">
-                <label class="form-label">Password</label>
-                <input type="password" class="form-control" name="password" required>
-            </div>
+    <label class="form-label">Password</label>
+        <input type="password" 
+            class="form-control" 
+            name="password" 
+            required
+            pattern="^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&]).{8,}$"
+            title="Must be at least 8 characters long, include uppercase, lowercase, number, and special character">
+        <div class="form-text">
+            Password must be at least 8 characters and include:
+            uppercase, lowercase, number, and special character.
+        </div>
+    </div>
             <button type="submit" class="btn btn-success w-100">Register</button>
         </form>
         <div class="text-center mt-3">
@@ -49,8 +58,14 @@
             if (res.ok) {
                 msg.innerHTML = `<span class="text-success">✅ Registered successfully! Go to <a href='/login'>Login</a></span>`;
             } else {
-                const error = await res.text();
-                msg.innerHTML = `<span class="text-danger">❌ ${error}</span>`;
+                try {
+                    const error = await res.json(); // parse as JSON
+                    msg.innerHTML = `<span class="text-danger">❌ ${error.message}</span>`;
+                } catch {
+                    // fallback if response is not JSON
+                    const text = await res.text();
+                    msg.innerHTML = `<span class="text-danger">❌ ${text}</span>`;
+                }
             }
         });
     </script>

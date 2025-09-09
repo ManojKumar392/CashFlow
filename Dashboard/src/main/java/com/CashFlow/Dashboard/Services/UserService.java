@@ -5,6 +5,7 @@ import com.CashFlow.Dashboard.Repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import com.CashFlow.Dashboard.Payload.SignupRequest;
 
 import java.util.Optional;
 
@@ -21,18 +22,22 @@ public class UserService {
     }
 
     // 🔹 Register a new user
-    public User registerUser(User user) {
-        if (userRepository.existsByUsername(user.getUsername())) {
-            throw new RuntimeException("Username is already taken");
+    public User registerUser(SignupRequest signupRequest) {
+        // Check username/email uniqueness
+        if (userRepository.existsByUsername(signupRequest.getUsername())) {
+            throw new IllegalArgumentException("Username is already taken");
         }
-        if (userRepository.existsByEmail(user.getEmail())) {
-            throw new RuntimeException("Email is already registered");
+        if (userRepository.existsByEmail(signupRequest.getEmail())) {
+            throw new IllegalArgumentException("Email is already registered");
         }
 
-        // Hash the password before saving
-        user.setPassword(passwordEncoder.encode(user.getPassword()));
+        // Create new User entity
+        User user = new User();
+        user.setUsername(signupRequest.getUsername());
+        user.setEmail(signupRequest.getEmail());
+        user.setPassword(passwordEncoder.encode(signupRequest.getPassword()));
 
-        // Default role → USER (if none set)
+        // Default role → USER
         if (user.getRole() == null) {
             user.setRole("USER");
         }
